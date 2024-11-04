@@ -6,6 +6,7 @@ import os
 import time
 from dotenv import load_dotenv
 from openai import OpenAI
+import re
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,6 +18,8 @@ logging.basicConfig(
 )
 
 load_dotenv()
+
+mention_regex = re.compile(r'$(@\w+ ?)+')
 
 class TwitterEchoBot:
     def __init__(self, last_mention_id=None):
@@ -54,6 +57,9 @@ class TwitterEchoBot:
         """Reply to a tweet with its own content"""
         try:
             logging.info(f"Checking conditions for tweet {tweet.id}: {tweet.text}")
+
+            # Replace all mentions on the beginning of the tweet with empty string
+            tweet.text = mention_regex.sub('', tweet.text)
 
             completion = self.openai.chat.completions.create(
                 model="gpt-4o",

@@ -19,7 +19,7 @@ logging.basicConfig(
 
 load_dotenv()
 
-mention_regex = re.compile(r'$(@\w+ ?)+')
+mention_regex = re.compile(r'^(@\w+ ?)+')
 
 class TwitterEchoBot:
     def __init__(self, last_mention_id=None):

@@ -43,12 +43,13 @@ class TwitterEchoBot:
     def get_mentions(self, since_id=None):
         """Fetch mentions since the last checked tweet"""
         try:
+            print(f"Fetching mentions since {since_id}")
             mentions = self.client.get_users_mentions(
                 self.me.id,
                 since_id=since_id,
                 tweet_fields=['created_at']
             )
-            return mentions.data if mentions.data else []
+            return mentions.data[::-1] if mentions.data else []
         except Exception as e:
             logging.error(f"Error fetching mentions: {str(e)}")
             return []
@@ -85,18 +86,22 @@ class TwitterEchoBot:
     def run(self, check_interval=91):
         """Main bot loop"""
         logging.info("Starting bot loop...")
-        last_mention_id = self.last_mention_id
 
         while True:
             try:
-                mentions = self.get_mentions(since_id=last_mention_id)
+                mentions = self.get_mentions(since_id=self.last_mention_id)
 
                 for mention in mentions:
-                    self.on_mention(mention)
-                    last_mention_id = mention.id
-                    # Save the last mention ID for the next check
+                    try:
+                        self.on_mention(mention)
+                        # Save the last mention ID for the next check
+                    except Exception as e:
+                        logging.error(f"Error processing mention {mention.id}: {str(e)}")
+
+                    # Save the last mention ID regardless of success
+                    self.last_mention_id = mention.id
                     with open('last_mention_id.txt', 'w') as f:
-                        f.write(str(last_mention_id))
+                        f.write(str(self.last_mention_id))
 
                 logging.info("Waiting for new mentions...")
                 time.sleep(check_interval)
